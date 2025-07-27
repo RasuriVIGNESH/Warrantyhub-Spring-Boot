@@ -1,0 +1,29 @@
+# Java and Maven
+target/
+*.log
+*.class
+*.jar
+*.war
+*.ear
+
+# IntelliJ / VSCode / Eclipse
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Maven Wrapper logs and settings
+.mvn/
+!mvnw
+!mvnw.cmd
+
+# Environment files
+.env
+application-*.yml
+application-*.properties
+
+# OS-specific
+.DS_Store
+Thumbs.db
