@@ -17,11 +17,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 
 @RestController
 @RequestMapping("/api/devices" )
 @Tag(name = "Device Management", description = "CRUD operations for user devices")
-@SecurityRequirement(name = "Bearer Authentication")
+@SecurityRequirements({
+        @SecurityRequirement(name = "Bearer Authentication"),
+        @SecurityRequirement(name = "Google OAuth2")
+})
 public class DeviceController {
 
     private final DeviceService deviceService;

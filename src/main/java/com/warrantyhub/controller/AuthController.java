@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth" )
-@Tag(name = "Authentication", description = "Authentication and user management endpoints")
+@Tag(name = "Authentication", description = "Authentication and user management endpoints supporting both email/password and OAuth2 login")
 public class AuthController {
 
     private final AuthService authService;
@@ -36,7 +37,7 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(
             summary = "User registration",
-            description = "Registers a new user",
+            description = "Registers a new user with email and password",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "User registration data",
                     required = true,
@@ -50,9 +51,9 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(
             summary = "User login",
-            description = "Authenticates user and returns JWT tokens",
+            description = "Authenticates user with email/password and returns JWT tokens. For OAuth2 login, use the 'Google OAuth2' authorization button above.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Login credentials",
+                    description = "Login credentials (email and password)",
                     required = true,
                     content = @Content(schema = @Schema(implementation = LoginRequest.class))
             )
@@ -78,7 +79,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     @Operation(
             summary = "Request password reset",
-            description = "Sends a password reset link to the user\"s email address",
+            description = "Sends a password reset link to the user's email address",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Email for password reset",
                     required = true,
@@ -110,7 +111,11 @@ public class AuthController {
     @PostMapping("/logout")
     @Operation(
             summary = "Logout user",
-            description = "Logs out the current user and invalidates tokens"
+            description = "Logs out the current user and invalidates tokens (works for both JWT and OAuth2 sessions)",
+            security = {
+                    @SecurityRequirement(name = "Bearer Authentication"),
+                    @SecurityRequirement(name = "Google OAuth2")
+            }
     )
     public ResponseEntity<ApiResponse> logout() {
         return ResponseEntity.ok(authService.logout());
@@ -119,7 +124,11 @@ public class AuthController {
     @GetMapping("/profile")
     @Operation(
             summary = "Get user profile",
-            description = "Returns the profile of the currently authenticated user"
+            description = "Returns the profile of the currently authenticated user (supports both JWT and OAuth2 authentication)",
+            security = {
+                    @SecurityRequirement(name = "Bearer Authentication"),
+                    @SecurityRequirement(name = "Google OAuth2")
+            }
     )
     public ResponseEntity<UserProfileDTO> getProfile(Authentication authentication) {
         return ResponseEntity.ok(authService.getProfile(authentication));

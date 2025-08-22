@@ -3,12 +3,15 @@ package com.warrantyhub.service.impl;
 import com.warrantyhub.model.User;
 import com.warrantyhub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -31,28 +34,48 @@ public class userDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // Find the user by email using the UserRepository.
-        // We assume the repository returns an Optional<User>.
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        try {
+            // Input validation
+            if (email == null || email.trim().isEmpty()) {
+                throw new UsernameNotFoundException("Email cannot be null or empty");
+            }
 
-        // Throw an exception if the user is not found.
-        User user = userOptional.orElseThrow(() ->
-                new UsernameNotFoundException("User not found with email: " + email));
+            // Find user by email
+            User user = userRepository.findByEmail(email.trim())
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        // Create a UserDetails object from the found User model.
-        // We use the UserDetails interface implementation provided by Spring Security.
-        // The UserDetails object contains the user's email as the principal,
-        // the hashed password, a list of authorities/roles, and the enabled status.
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                user.isEnabled(), // Use the enabled status from the User model
-                true, // account non-expired
-                true, // credentials non-expired
-                true, // account non-locked
-                // Assign a default authority since no specific roles are defined in the User model.
-                // You can expand this to load actual roles from the database later.
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
-        );
+            // CRITICAL FIX: Ensure username is never null or empty
+            String username = user.getEmail();
+            if (username == null || username.trim().isEmpty()) {
+                throw new UsernameNotFoundException("User email is null or empty in database");
+            }
+
+            // CRITICAL FIX: Handle password for OAuth2 users
+            String password = user.getPassword();
+            if (password == null || password.trim().isEmpty()) {
+                // OAuth2 users don't have passwords, provide placeholder
+                password = "{noop}OAUTH_USER";
+            }
+
+            // CRITICAL FIX: Ensure authorities are never null or empty
+            Collection<? extends GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
+
+            // Build UserDetails with validated parameters
+            return org.springframework.security.core.userdetails.User.builder()
+                    .username(username.trim())  // Never null or empty
+                    .password(password)         // Never null or empty
+                    .authorities(authorities)   // Never null or empty
+                    .disabled(!Boolean.TRUE.equals(user.isEnabled()))
+                    .accountExpired(false)
+                    .accountLocked(false)
+                    .credentialsExpired(false)
+                    .build();
+
+        } catch (UsernameNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UsernameNotFoundException("Error loading user details", e);
+        }
     }
+
 }

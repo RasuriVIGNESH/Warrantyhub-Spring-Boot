@@ -231,31 +231,31 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserProfileDTO getProfile(Authentication authentication) {
+        // Ensure authentication object is not null and contains a principal name
+        if (authentication == null || authentication.getName() == null || authentication.getName().isEmpty()) {
+            throw new UnauthorizedException("User is not authenticated or authentication details are missing.");
+        }
+
         User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found for authenticated principal: " + authentication.getName()));
 
         UserProfileDTO profileDTO = new UserProfileDTO();
         profileDTO.setId(user.getId().toString());
         profileDTO.setName(user.getName());
         profileDTO.setEmail(user.getEmail());
-        profileDTO.setEmailNotifications(user.getPreferences().isEmailNotifications());
-        profileDTO.setWarrantyExpirationReminders(user.getPreferences().getWarrantyExpirationReminders());
+        // Ensure preferences are not null before accessing them
+        if (user.getPreferences() != null) {
+            profileDTO.setEmailNotifications(user.getPreferences().isEmailNotifications());
+            profileDTO.setWarrantyExpirationReminders(user.getPreferences().getWarrantyExpirationReminders());
+        } else {
+            // Handle case where preferences might be null (e.g., set default values or log a warning)
+            profileDTO.setEmailNotifications(false); // Default value
+            profileDTO.setWarrantyExpirationReminders(0); // Default value
+        }
 
         return profileDTO;
     }
 
-//    private RefreshToken createRefreshToken(User user) {
-//        // Delete existing refresh tokens for user
-//        refreshTokenRepository.findByUser(user).ifPresent(refreshTokenRepository::delete);
-//
-//        RefreshToken refreshToken = new RefreshToken();
-//        refreshToken.setUser(user);
-//        refreshToken.setToken(UUID.randomUUID().toString());
-//        refreshToken.setExpiryDate(Instant.now().plusSeconds(604800)); // 7 days
-//
-//        return refreshTokenRepository.save(refreshToken);
-//    }
-    
     private RefreshToken createRefreshToken(User user) {
         Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(user);
 
@@ -285,5 +285,3 @@ public class AuthServiceImpl implements AuthService {
         return token;
     }
 }
-
-

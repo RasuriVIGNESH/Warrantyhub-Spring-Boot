@@ -17,13 +17,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 
 import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/devices/{deviceId}/documents" )
 @Tag(name = "Document Management", description = "Operations for managing device documents")
-@SecurityRequirement(name = "Bearer Authentication")
+@SecurityRequirements({
+        @SecurityRequirement(name = "Bearer Authentication"),
+        @SecurityRequirement(name = "Google OAuth2")
+})
 public class DocumentController {
 
     private final DocumentService documentService;

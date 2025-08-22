@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/users" )
 @Tag(name = "User Profile", description = "Operations for managing user profile")
-@SecurityRequirement(name = "Bearer Authentication")
+@SecurityRequirements({
+        @SecurityRequirement(name = "Bearer Authentication"),
+        @SecurityRequirement(name = "Google OAuth2")
+})
 public class UserController {
 
     private final UserService userService;
